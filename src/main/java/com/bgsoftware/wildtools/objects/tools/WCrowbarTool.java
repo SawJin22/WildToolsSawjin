@@ -22,7 +22,7 @@ public final class WCrowbarTool extends WTool implements CrowbarTool {
     String clicktype = "";
     Action click;
 
-    public WCrowbarTool(Material type, String name, List<String> commandsOnUse){
+    public WCrowbarTool(Material type, String name, List<String> commandsOnUse) {
         super(type, name, ToolMode.CROWBAR);
         this.commandsOnUse = commandsOnUse;
     }
@@ -34,48 +34,49 @@ public final class WCrowbarTool extends WTool implements CrowbarTool {
 
     @Override
     public boolean onBlockInteract(PlayerInteractEvent e) {
-        if(!e.getClickedBlock().getType().name().contains("SPAWNER"))
-            return false;
-
-        if(!BukkitUtils.canBreakBlock(e.getPlayer(), e.getClickedBlock(), this))
-            return true;
-
-        CreatureSpawner creatureSpawner = (CreatureSpawner) e.getClickedBlock().getState();
-
-        List<ItemStack> itemsToDrop = plugin.getProviders().getBlockDrops(e.getPlayer(), e.getClickedBlock(), true);
-
-        boolean addedSilktouch = false;
-
-        /* Many plugins require the players to have silk touch.
-           Therefore, I add silk touch manually to avoid issues. */
-        if(e.getItem().getEnchantmentLevel(Enchantment.SILK_TOUCH) < 1){
-            addedSilktouch = true;
-            e.getItem().addUnsafeEnchantment(Enchantment.SILK_TOUCH, 1);
-        }
-
-        try {
-            if (!BukkitUtils.breakBlock(e.getPlayer(), null, null, e.getClickedBlock(), e.getItem(), this, itemStack -> null))
-                return true;
-        }finally {
-            if(addedSilktouch)
-                e.getItem().removeEnchantment(Enchantment.SILK_TOUCH);
-        }
-
-        if(plugin.getConfig().getString("tools.crowbar_tool.click-type") != null) {
+        if (plugin.getConfig().getString("tools.crowbar_tool.click-type") != null) {
             clicktype = plugin.getConfig().getString("tools.crowbar_tool.click-type");
-            if(clicktype.equalsIgnoreCase("right")){
+            if (clicktype.equalsIgnoreCase("right")) {
                 click = Action.RIGHT_CLICK_BLOCK;
-            }else if(clicktype.equalsIgnoreCase("left")){
+            } else if (clicktype.equalsIgnoreCase("left")) {
                 click = Action.LEFT_CLICK_BLOCK;
-            }else{
+            } else {
                 Player player = e.getPlayer();
                 player.sendMessage("config failed to load properly");
                 click = null;
                 return false;
             }
+            if (!(e.getAction() == click)) {
+                e.setCancelled(true);
+                return false;
+            }
             if (e.getAction() == click) {
-                Player player = e.getPlayer();
-                player.sendMessage(clicktype);
+                if (!e.getClickedBlock().getType().name().contains("SPAWNER"))
+                    return false;
+
+                if (!BukkitUtils.canBreakBlock(e.getPlayer(), e.getClickedBlock(), this))
+                    return true;
+
+                CreatureSpawner creatureSpawner = (CreatureSpawner) e.getClickedBlock().getState();
+
+                List<ItemStack> itemsToDrop = plugin.getProviders().getBlockDrops(e.getPlayer(), e.getClickedBlock(), true);
+
+                boolean addedSilktouch = false;
+
+        /* Many plugins require the players to have silk touch.
+           Therefore, I add silk touch manually to avoid issues. */
+                if (e.getItem().getEnchantmentLevel(Enchantment.SILK_TOUCH) < 1) {
+                    addedSilktouch = true;
+                    e.getItem().addUnsafeEnchantment(Enchantment.SILK_TOUCH, 1);
+                }
+
+                try {
+                    if (!BukkitUtils.breakBlock(e.getPlayer(), null, null, e.getClickedBlock(), e.getItem(), this, itemStack -> null))
+                        return true;
+                } finally {
+                    if (addedSilktouch)
+                        e.getItem().removeEnchantment(Enchantment.SILK_TOUCH);
+                }
 
                 if (commandsOnUse.isEmpty()) {
                     if (!itemsToDrop.isEmpty()) {
@@ -91,13 +92,12 @@ public final class WCrowbarTool extends WTool implements CrowbarTool {
                             .replace("%entity%", creatureSpawner.getSpawnedType().name())
                     ));
                 }
-
                 CrowbarWandUseEvent crowbarWandUseEvent = new CrowbarWandUseEvent(e.getPlayer(), this, e.getClickedBlock());
                 Bukkit.getPluginManager().callEvent(crowbarWandUseEvent);
-
                 reduceDurablility(e.getPlayer(), 1, e.getItem());
             }
         }
+
 
         return true;
     }

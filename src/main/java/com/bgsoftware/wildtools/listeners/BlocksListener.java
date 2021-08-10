@@ -131,12 +131,9 @@ public final class BlocksListener implements Listener {
                     toolInteract = tool.onAirInteract(e);
                     break;
                 case RIGHT_CLICK_BLOCK:
-                    if (!e.isCancelled())
-                        toolInteract = tool.onBlockInteract(e);
-                    break;
                 case LEFT_CLICK_BLOCK:
                     if (!e.isCancelled())
-                        toolInteract = tool.onBlockHit(e);
+                        toolInteract = tool.onBlockInteract(e);
                     break;
             }
 
@@ -213,6 +210,11 @@ public final class BlocksListener implements Listener {
                 e.setCancelled(true);
                 tool.setLastUse(e.getPlayer().getUniqueId());
             }
+
+//            if (tool.onAirInteract(new PlayerInteractEvent(e.getPlayer(), Action.LEFT_CLICK_AIR, toolItemStack.getItem(), null, BlockFace.UP))) {
+//                e.setCancelled(true);
+//                tool.setLastUse(e.getPlayer().getUniqueId());
+//            }
 
             if (tool.isPrivate()) {
                 String owner = toolItemStack.getOwner();
