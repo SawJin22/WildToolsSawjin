@@ -9,6 +9,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.CreatureSpawner;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Player;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 
@@ -17,6 +19,8 @@ import java.util.List;
 public final class WCrowbarTool extends WTool implements CrowbarTool {
 
     private final List<String> commandsOnUse;
+    String clicktype = "";
+    Action click;
 
     public WCrowbarTool(Material type, String name, List<String> commandsOnUse){
         super(type, name, ToolMode.CROWBAR);
@@ -57,26 +61,43 @@ public final class WCrowbarTool extends WTool implements CrowbarTool {
                 e.getItem().removeEnchantment(Enchantment.SILK_TOUCH);
         }
 
-        if(commandsOnUse.isEmpty()) {
-            if(!itemsToDrop.isEmpty()) {
-                ItemStack dropItem = itemsToDrop.get(0);
-                if (isAutoCollect())
-                    ItemUtils.addItem(dropItem, e.getPlayer().getInventory(), e.getClickedBlock().getLocation(), null);
-                else
-                    e.getClickedBlock().getWorld().dropItemNaturally(e.getClickedBlock().getLocation(), dropItem);
+        if(plugin.getConfig().getString("tools.crowbar_tool.click-type") != null) {
+            clicktype = plugin.getConfig().getString("tools.crowbar_tool.click-type");
+            if(clicktype.equalsIgnoreCase("right")){
+                click = Action.RIGHT_CLICK_BLOCK;
+            }else if(clicktype.equalsIgnoreCase("left")){
+                click = Action.LEFT_CLICK_BLOCK;
+            }else{
+                Player player = e.getPlayer();
+                player.sendMessage("config failed to load properly");
+                click = null;
+                return false;
+            }
+            if (e.getAction() == click) {
+                Player player = e.getPlayer();
+                player.sendMessage(clicktype);
+
+                if (commandsOnUse.isEmpty()) {
+                    if (!itemsToDrop.isEmpty()) {
+                        ItemStack dropItem = itemsToDrop.get(0);
+                        if (isAutoCollect())
+                            ItemUtils.addItem(dropItem, e.getPlayer().getInventory(), e.getClickedBlock().getLocation(), null);
+                        else
+                            e.getClickedBlock().getWorld().dropItemNaturally(e.getClickedBlock().getLocation(), dropItem);
+                    }
+                } else {
+                    commandsOnUse.forEach(commandOnUse -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), commandOnUse
+                            .replace("%player%", e.getPlayer().getName())
+                            .replace("%entity%", creatureSpawner.getSpawnedType().name())
+                    ));
+                }
+
+                CrowbarWandUseEvent crowbarWandUseEvent = new CrowbarWandUseEvent(e.getPlayer(), this, e.getClickedBlock());
+                Bukkit.getPluginManager().callEvent(crowbarWandUseEvent);
+
+                reduceDurablility(e.getPlayer(), 1, e.getItem());
             }
         }
-        else{
-            commandsOnUse.forEach(commandOnUse -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), commandOnUse
-                    .replace("%player%", e.getPlayer().getName())
-                    .replace("%entity%", creatureSpawner.getSpawnedType().name())
-            ));
-        }
-
-        CrowbarWandUseEvent crowbarWandUseEvent = new CrowbarWandUseEvent(e.getPlayer(), this, e.getClickedBlock());
-        Bukkit.getPluginManager().callEvent(crowbarWandUseEvent);
-
-        reduceDurablility(e.getPlayer(), 1, e.getItem());
 
         return true;
     }

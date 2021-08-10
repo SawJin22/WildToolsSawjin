@@ -136,7 +136,6 @@ events-manipulations:
 #      Please follow the "TYPE" or "TYPE:DATA" format for drops and blocks.
 # blacklisted-worlds: A list of worlds that the tool will not work inside. [LIST]
 # whitelisted-worlds: A list of worlds that the tool will only work inside. [LIST]
-
 tools:
   trench_pickaxe:
     tool-mode: CUBOID
@@ -388,3 +387,4 @@ tools:
       - '&f   {}'
       - '&f'
       - '&8&m---------------------------------------'
+    click-type: right
